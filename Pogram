@@ -1,0 +1,68 @@
+#include <Keypad.h>
+
+const byte ROWS = 4; // Four rows
+const byte COLS = 4; // Four columns
+
+String pnrstatus = "";
+int pnrstatusCount = 0;
+String pnr = "76423";
+
+int buzzerPin = 15;
+int relayPin = 16;
+
+// Define the keymap
+char keys[ROWS][COLS] = {
+  {'1', '2', '3', 'A'},
+  {'4', '5', '6', 'B'},
+  {'7', '8', '9', 'C'},
+  {'*', '0', '#', 'D'}
+};
+
+// Define the row and column pins for the keypad
+byte rowPins[ROWS] = {27, 26, 25, 33}; 
+byte colPins[COLS] = {32, 14, 12, 13};
+
+// Create the Keypad object
+Keypad keypad = Keypad(makeKeymap(keys), rowPins, colPins, ROWS, COLS);
+
+void setup() {
+  Serial.begin(9600);
+  pinMode(buzzerPin, OUTPUT);
+  pinMode(relayPin, INPUT);
+}
+
+void loop() {
+  char key = keypad.getKey();
+
+  if (key != NO_KEY) {
+    pnrstatusCount += 1;
+    pnrstatus += key;
+    
+    if (key == 'C') {
+      pnrstatusCount = 0;
+      pnrstatus = "";
+    }
+
+    digitalWrite(buzzerPin, HIGH);
+    delay(100);
+    digitalWrite(buzzerPin, LOW);
+    delay(100);
+
+    Serial.println(pnrstatus);
+
+    if (pnrstatusCount > 4) {
+      if (pnrstatus.equals(pnr)) {
+        Serial.println("Lock opened");
+        digitalWrite(buzzerPin, HIGH);
+        delay(1000); // Wait for 1 second
+        digitalWrite(buzzerPin, LOW);
+
+        pinMode(relayPin, OUTPUT);
+        delay(1000); // Wait for 1 second
+        pinMode(relayPin, INPUT);
+      }
+      pnrstatusCount = 0;
+      pnrstatus = "";
+    }
+  }
+}
